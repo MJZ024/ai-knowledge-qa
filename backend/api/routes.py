@@ -7,7 +7,7 @@ from fastapi import APIRouter, HTTPException, BackgroundTasks
 from pydantic import BaseModel, Field
 from fastapi.responses import StreamingResponse
 
-from ..core import settings, llm_manager, rag_retriever
+from core import settings, llm_manager, rag_retriever
 
 
 router = APIRouter(prefix="/api", tags=["RAG 问答系统"])
@@ -104,7 +104,9 @@ async def chat(request: ChatRequest):
             "retrieval_top_k": request.retrieval_top_k,
             "similarity_threshold": request.similarity_threshold,
         },
-        model=settings.OLLAMA_MODEL if settings.LLM_PROVIDER == "ollama" else settings.OPENAI_MODEL,
+        model=(settings.SILICONFLOW_MODEL if settings.LLM_PROVIDER == "siliconflow"
+               else settings.OLLAMA_MODEL if settings.LLM_PROVIDER == "ollama"
+               else settings.OPENAI_MODEL),
     )
 
 
@@ -198,7 +200,9 @@ async def get_status():
     return {
         "status": "running",
         "llm_provider": settings.LLM_PROVIDER,
-        "model": settings.OLLAMA_MODEL if settings.LLM_PROVIDER == "ollama" else settings.OPENAI_MODEL,
+        "model": (settings.SILICONFLOW_MODEL if settings.LLM_PROVIDER == "siliconflow"
+                  else settings.OLLAMA_MODEL if settings.LLM_PROVIDER == "ollama"
+                  else settings.OPENAI_MODEL),
         "student_id": "423830107",
         "student_name": "毛坚再",
     }

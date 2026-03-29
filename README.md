@@ -10,7 +10,8 @@
 本项目是一个**前沿 AI 应用**，融合了以下核心技术：
 
 - **RAG（Retrieval-Augmented Generation）** — 检索增强生成，结合知识库检索与 LLM 推理
-- **Embedding 向量化** — 将文本转化为向量进行语义检索
+- **多 LLM 提供者支持** — SiliconFlow（国内 AI，直连）/ OpenAI GPT / Ollama（本地）
+- **Embedding 向量化** — 将文本转化为向量进行语义检索（BAAI/bge-large-zh-v1.5 中文优化模型）
 - **参数可视化调优** — 实时调整 LLM 参数，观察效果变化
 - **前后端分离架构** — Next.js + FastAPI + Docker
 

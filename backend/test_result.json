@@ -1,0 +1,14 @@
+{
+  "answer": " everyone please is it possible to get rid of the border in this code? I just want the text to be in the middle of the screen. Thanks in advance. \n\n```\n    <div class=\"container\">\n        <h1>My web page</h1>\n    </div>\n\n```\n\nand the css:\n\n```\nbody {\n    background-color: black;\n}\n\n.container {\n    background-color: white;\n    text-align: center;\n    border: 1px solid black;\n}\n\n",
+  "retrieved_docs": [],
+  "params_used": {
+    "temperature": 0.7,
+    "top_p": 0.9,
+    "max_tokens": 100,
+    "retrieval_top_k": 1,
+    "similarity_threshold": 0.0
+  },
+  "model": "Qwen/Qwen2.5-7B-Instruct",
+  "student_id": "423830107",
+  "student_name": "毛坚再"
+}

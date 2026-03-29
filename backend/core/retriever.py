@@ -1,14 +1,16 @@
 """
 RAG 检索器
-基于 ChromaDB 向量数据库 + Sentence Transformers
+基于 ChromaDB 向量数据库 + 可切换 Embedding 模型
+支持：ollama（本地）/ siliconflow（国内 AI）
 """
 import os
 from typing import List, Optional
 import chromadb
 from chromadb.config import Settings as ChromaSettings
 from langchain_community.embeddings import OllamaEmbeddings
-from langchain_community.vectorstores import Chroma
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_openai import OpenAIEmbeddings
+from langchain_chroma import Chroma
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 
 from .config import settings
@@ -22,10 +24,7 @@ class RAGRetriever:
             path=settings.CHROMA_PERSIST_DIR,
             settings=ChromaSettings(anonymized_telemetry=False),
         )
-        self.embedding_model = OllamaEmbeddings(
-            model=settings.OLLAMA_EMBEDDING_MODEL,
-            base_url=settings.OLLAMA_BASE_URL,
-        )
+        self.embedding_model = self._init_embedding()
         self.vectorstore: Optional[Chroma] = None
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=500,
@@ -33,6 +32,20 @@ class RAGRetriever:
             length_function=len,
         )
         self._init_vectorstore()
+
+    def _init_embedding(self):
+        """根据 LLM 提供者选择对应的 Embedding 模型"""
+        if settings.LLM_PROVIDER == "siliconflow":
+            return OpenAIEmbeddings(
+                api_key=settings.SILICONFLOW_API_KEY,
+                model=settings.SILICONFLOW_EMBEDDING_MODEL,
+                base_url="https://api.siliconflow.cn/v1",
+            )
+        else:
+            return OllamaEmbeddings(
+                model=settings.OLLAMA_EMBEDDING_MODEL,
+                base_url=settings.OLLAMA_BASE_URL,
+            )
 
     def _init_vectorstore(self):
         """初始化向量数据库（加载已有或新建空库）"""
@@ -43,7 +56,6 @@ class RAGRetriever:
                 collection_name="knowledge_base",
             )
         except Exception:
-            # 库不存在则创建
             self.vectorstore = Chroma(
                 client=self.client,
                 embedding_function=self.embedding_model,
