@@ -8,8 +8,8 @@ from typing import List, Optional
 import chromadb
 from chromadb.config import Settings as ChromaSettings
 from langchain_community.embeddings import OllamaEmbeddings
-from langchain_openai import OpenAIEmbeddings
 from langchain_chroma import Chroma
+from .embeddings import SiliconFlowEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 
@@ -36,10 +36,9 @@ class RAGRetriever:
     def _init_embedding(self):
         """根据 LLM 提供者选择对应的 Embedding 模型"""
         if settings.LLM_PROVIDER == "siliconflow":
-            return OpenAIEmbeddings(
+            return SiliconFlowEmbeddings(
                 api_key=settings.SILICONFLOW_API_KEY,
                 model=settings.SILICONFLOW_EMBEDDING_MODEL,
-                base_url="https://api.siliconflow.cn/v1",
             )
         else:
             return OllamaEmbeddings(
