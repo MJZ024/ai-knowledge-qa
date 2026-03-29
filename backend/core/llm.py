@@ -4,7 +4,7 @@ LLM 调用封装
 """
 import os
 from typing import Generator, Optional
-from langchain_community.llms import Ollama
+from langchain_ollama import OllamaLLM
 from langchain_openai import OpenAI
 
 from .config import settings
@@ -15,7 +15,8 @@ class LLMManager:
 
     def __init__(self):
         self.provider = settings.LLM_PROVIDER
-        self._llm: Optional[OpenAI | Ollama] = None
+        self._llm: Optional[OpenAI | OllamaLLM] = None
+        self._ollama_opts = {"num_ctx": 4096, "top_p": settings.DEFAULT_TOP_P}
         self._init_llm()
 
     def _init_llm(self):
@@ -27,7 +28,6 @@ class LLMManager:
                 max_tokens=settings.DEFAULT_MAX_TOKENS,
             )
         elif self.provider == "siliconflow":
-            # SiliconFlow 兼容 OpenAI 接口，只需改 base_url 和 api_key
             self._llm = OpenAI(
                 api_key=settings.SILICONFLOW_API_KEY,
                 model=settings.SILICONFLOW_MODEL,
@@ -35,15 +35,13 @@ class LLMManager:
                 temperature=settings.DEFAULT_TEMPERATURE,
                 max_tokens=settings.DEFAULT_MAX_TOKENS,
             )
-        else:  # ollama (default)
-            self._llm = Ollama(
+        else:  # ollama
+            self._llm = OllamaLLM(
                 base_url=settings.OLLAMA_BASE_URL,
                 model=settings.OLLAMA_MODEL,
                 temperature=settings.DEFAULT_TEMPERATURE,
-                options={
-                    "num_ctx": 4096,
-                    "top_p": settings.DEFAULT_TOP_P,
-                },
+                num_ctx=4096,
+                top_p=settings.DEFAULT_TOP_P,
             )
 
     def update_params(self, temperature: float, top_p: float, max_tokens: int):
@@ -52,9 +50,15 @@ class LLMManager:
             self._llm.temperature = temperature
             self._llm.max_tokens = max_tokens
         else:
-            self._llm.temperature = temperature
-            self._llm.options["top_p"] = top_p
-            self._llm.options["num_predict"] = max_tokens
+            # OllamaLLM 无法动态改参数，重新创建实例
+            self._ollama_opts["top_p"] = top_p
+            self._llm = OllamaLLM(
+                base_url=settings.OLLAMA_BASE_URL,
+                model=settings.OLLAMA_MODEL,
+                temperature=temperature,
+                num_ctx=self._ollama_opts.get("num_ctx", 4096),
+                top_p=top_p,
+            )
 
     def generate(self, prompt: str) -> str:
         """同步生成"""
@@ -78,9 +82,9 @@ class LLMManager:
             return {
                 "provider": "ollama",
                 "model": settings.OLLAMA_MODEL,
-                "temperature": self._llm.temperature,
-                "top_p": self._llm.options.get("top_p", 0.9),
-                "max_tokens": self._llm.options.get("num_predict", 512),
+                "temperature": self._llm.temperature if hasattr(self._llm, "temperature") else settings.DEFAULT_TEMPERATURE,
+                "top_p": self._ollama_opts.get("top_p", 0.9),
+                "max_tokens": 512,
             }
 
 

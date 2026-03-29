@@ -64,7 +64,11 @@ class RAGRetriever:
 
     def add_documents(self, texts: List[str], metadatas: List[dict] = None):
         """向知识库添加文档"""
-        docs = [Document(page_content=t, metadata=m or {}) for t in texts]
+        if metadatas is None:
+            metas: List[dict] = [{}] * len(texts)
+        else:
+            metas = [m or {} for m in metadatas]
+        docs = [Document(page_content=t, metadata=m) for t, m in zip(texts, metas)]
         chunks = self.text_splitter.split_documents(docs)
 
         if self.vectorstore is None:
